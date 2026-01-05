@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+*.h5
+*.hdf5
+_uploaded.h5
+downloaded.h5

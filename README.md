@@ -1,6 +1,15 @@
-# Hate Speech Classifier (Streamlit)
+# 4-Class Sentence Classifier (Streamlit)
 
-A minimal Streamlit app to classify text for hate speech using a Hugging Face model.
+A Streamlit app that classifies a sentence into four classes:
+
+- Negative
+- Neutral
+- Positive
+- Suicidal
+
+It loads a saved scikit-learn SVM (`svm_model.joblib`) and a `LabelEncoder` (`label_encoder.joblib`).
+For accurate predictions, it also needs the TF-IDF vectorizer used during training
+saved as `vectorizer.joblib`.
 
 ## Quick start (local)
 
@@ -17,21 +26,44 @@ pip install -r requirements.txt
 streamlit run streamlit_app.py
 ```
 
-4. Enter/paste text and click "Classify". The app autoloads `cardiffnlp/twitter-roberta-base-hate` on first run.
+4. Enter/paste text and click "Classify".
 
-## Deploy to Streamlit Community Cloud
+### Required files
+
+Place these files in the project root:
+
+- `svm_model.joblib` – trained `sklearn.svm.SVC` classifier
+- `label_encoder.joblib` – label encoder with classes `['Negative', 'Neutral', 'Positive', 'Suicidal']`
+- `vectorizer.joblib` – TF-IDF vectorizer used during training (must match training vocabulary)
+
+Without `vectorizer.joblib`, the app cannot transform text to the expected feature space (`n_features_in_` of the SVM).
+
+## Deploy to Render
+
+This repo includes `render.yaml`. Deploy steps:
+
+1. Push this folder to a GitHub repo.
+2. On https://render.com, create a new Web Service and point it to your repo.
+3. Render detects `render.yaml` and sets up the service.
+4. The app will start with:
+
+```bash
+streamlit run streamlit_app.py --server.port $PORT --server.address 0.0.0.0
+```
+
+Ensure the three model files listed above are committed to the repo.
 
 1. Push this folder to a GitHub repo.
 2. On https://streamlit.io/cloud, create a new app pointing to `streamlit_app.py`.
 3. In the app, paste text and click "Classify". The model downloads on first run.
 
-### Large files
+### Notes
 
-- Uploads are limited by Streamlit's `server.maxUploadSize` (set to 1024 MB in `.streamlit/config.toml`) and by platform limits. If uploads fail, prefer the "From URL" option to let the app download directly from object storage (S3, GCS) or a public link.
+- The SVM expects a feature dimension equal to the training vectorizer's vocabulary size. If you see errors about transformation, verify `vectorizer.joblib` is present and compatible.
+- If you also have a Keras model (e.g., `distilbert_model_weights.h5`), it is not used by the current app. We can add a Keras/TensorFlow inference path on request.
 
-## Notes
+## Development
 
-- The preview limits rows/cols to keep the UI responsive. Use the download buttons for full arrays.
-- If your file is a Keras model `.h5`, this app inspects datasets; it does not load the model with TensorFlow.
- - The classifier uses Hugging Face `transformers` (PyTorch). Initial model download occurs on first run.
- - If you want to switch models or add batch processing, we can extend the UI.
+- Python: 3.12 (venv)
+- Install deps: `pip install -r requirements.txt`
+- Run: `streamlit run streamlit_app.py`

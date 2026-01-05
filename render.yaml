@@ -2,8 +2,9 @@ services:
   - type: web
     name: faruk-classifier
     env: python
+    pythonVersion: 3.12.4
     plan: free
     buildCommand: pip install -r requirements.txt
-    startCommand: streamlit run streamlit_app.py --server.port $PORT --server.address 0.0.0.0
+    startCommand: sh -lc "streamlit run streamlit_app.py --server.port=$PORT --server.address=0.0.0.0"
     healthCheckPath: /
     autoDeploy: true

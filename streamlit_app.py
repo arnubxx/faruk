@@ -8,6 +8,14 @@ import streamlit as st
 import h5py
 import zipfile
 import requests
+from typing import cast
+
+# Optional: transformers for hate-speech classification
+try:
+    from transformers import pipeline, Pipeline
+except Exception:
+    pipeline = None  # type: ignore
+    Pipeline = object  # type: ignore
 
 # Try to reuse summarize helper if present
 try:
@@ -66,8 +74,14 @@ def preview_dataset(ds: h5py.Dataset, max_rows: int = 50, max_cols: int = 50) ->
     return arr
 
 
-def main():
-    st.set_page_config(page_title="HDF5 Viewer", layout="wide")
+@st.cache_resource(show_spinner=False)
+def get_hf_pipeline(model_id: str) -> Optional["Pipeline"]:
+    if pipeline is None:
+        return None
+    return cast("Pipeline", pipeline("text-classification", model=model_id, tokenizer=model_id, return_all_scores=True))
+
+
+def app_hdf5_explorer():
     st.title("HDF5 (.h5) Explorer")
     st.caption("Browse groups, datasets, attributes, and preview values.")
 
@@ -283,6 +297,40 @@ def main():
                         st.json(summ)
                     except Exception as e:
                         st.write(f"Summary failed: {e}")
+
+
+def app_hate_speech_classifier():
+    st.title("Hate Speech Classifier")
+    st.caption("Type text and classify it with a pretrained model.")
+
+    if pipeline is None:
+        st.error("transformers not installed. Please add it to requirements.")
+        return
+
+    default_model = "cardiffnlp/twitter-roberta-base-hate"
+    with st.spinner("Loading model (first time may take a bit)..."):
+        clf = get_hf_pipeline(default_model)
+    if clf is None:
+        st.error("Failed to load transformers pipeline.")
+        return
+
+    text = st.text_area("Enter text", height=150, placeholder="Type a sentence to classify...")
+    if st.button("Classify") and text.strip():
+        with st.spinner("Predicting..."):
+            outputs = clf(text)
+        scores = outputs[0]
+        # Best label
+        best = max(scores, key=lambda x: x["score"]) if scores else {"label": "?", "score": 0.0}
+        st.metric("Prediction", f"{best['label']} ({best['score']:.3f})")
+        # Sorted scores
+        st.subheader("Scores")
+        for item in sorted(scores, key=lambda x: x['score'], reverse=True):
+            st.write(f"{item['label']}: {item['score']:.4f}")
+
+
+def main():
+    st.set_page_config(page_title="Hate Speech Classifier", layout="wide")
+    app_hate_speech_classifier()
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
-# HDF5 (.h5) Streamlit Viewer
+# Hate Speech Classifier (Streamlit)
 
-A lightweight Streamlit app to explore HDF5 files: browse groups and datasets, view attributes, preview values, and download slices as `.npy` or `.csv`.
+A minimal Streamlit app to classify text for hate speech using a Hugging Face model.
 
 ## Quick start (local)
 
@@ -17,13 +17,13 @@ pip install -r requirements.txt
 streamlit run streamlit_app.py
 ```
 
-4. In the sidebar, either select `distilbert_model_weights.h5` (if present), upload a `.h5/.hdf5` file, or use "From URL" to fetch a file.
+4. Enter/paste text and click "Classify". The app autoloads `cardiffnlp/twitter-roberta-base-hate` on first run.
 
 ## Deploy to Streamlit Community Cloud
 
 1. Push this folder to a GitHub repo.
 2. On https://streamlit.io/cloud, create a new app pointing to `streamlit_app.py`.
-3. In the app, upload your `.h5` file via the sidebar or paste a direct URL. (Avoid committing very large weight files to the repo.)
+3. In the app, paste text and click "Classify". The model downloads on first run.
 
 ### Large files
 
@@ -33,3 +33,5 @@ streamlit run streamlit_app.py
 
 - The preview limits rows/cols to keep the UI responsive. Use the download buttons for full arrays.
 - If your file is a Keras model `.h5`, this app inspects datasets; it does not load the model with TensorFlow.
+ - The classifier uses Hugging Face `transformers` (PyTorch). Initial model download occurs on first run.
+ - If you want to switch models or add batch processing, we can extend the UI.
